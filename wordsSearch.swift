@@ -2,38 +2,6 @@
 
 import Foundation
 
-func unique(source: [String]) -> [String] {
-    var previous = String()
-    return source.flatMap {
-        if $0 != previous { previous = $0; return $0 }
-        return nil
-    }
-}
-
-func uniqueOrdered(array: [String]) -> [String] {
-    let result = array.sorted()
-    print("Words sorted")
-    return unique(source: result)
-}
-
-func matchesForRegexInText(regex: String, text: String) -> [String] {
-    guard let regex = try? NSRegularExpression(pattern: regex, options: []) else { return [] }
-    
-    let results = regex.matches(in: text,
-                                options: [],
-                                range: NSMakeRange(0, text.characters.count)) as [NSTextCheckingResult]
-    let nsString = text as NSString
-    return results.map { nsString.substring(with: $0.range) }
-}
-
-func stringFromArray(data: [String]) -> String {
-    var result = String()
-    for (idx, word) in data.enumerated() {
-        result += ("\(idx+1). \(word)\n")
-    }
-    return result
-}
-
 //main
 
 print("Script activated")
@@ -61,16 +29,27 @@ if let inF = inFile, let outF = outFile {
     print("Reading")
     if let text = try? String(contentsOfFile: readPath, encoding: String.Encoding.utf8) {
         print("Finding words")
-        var result = matchesForRegexInText(regex: "\\b\\w*\\b", text: text)
-        print("\(result.count) words found")
-        
-        result = uniqueOrdered(array: result)
+        let set = matchesForRegexInText(regex: "\\b\\w*\\b", text: text)
+        let result = Array(set).sorted()
         print("Unique words found \(result.count)")
-        
-        let resultString = stringFromArray(data: result)
+        let resultString = stringFrom(array: result)
         print("Prepared text")
-        
         try? resultString.write(toFile: writePath, atomically: false, encoding: String.Encoding.utf8)
         print("Execution complete")
     }
+}
+
+func matchesForRegexInText(regex: String, text: String) -> Set<String> {
+    guard let regex = try? NSRegularExpression(pattern: regex, options: []) else { return [] }
+    
+    let results = regex.matches(in: text,
+                                options: [],
+                                range: NSMakeRange(0, text.characters.count)) as [NSTextCheckingResult]
+    let nsString = text as NSString
+    return Set(results.map { nsString.substring(with: $0.range) })
+}
+
+func stringFrom(array: [String]) -> String {
+    var idx = 1
+    return array.reduce("") { idx += 1; return $0 + "\(idx). \($1)\n" }
 }
